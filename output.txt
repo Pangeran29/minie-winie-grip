@@ -1,0 +1,2 @@
+        eprintln!("Problem with parsing arguments: {err}");
+        eprintln!("Application error: {e}");
