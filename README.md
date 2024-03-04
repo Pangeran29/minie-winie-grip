@@ -4,5 +4,8 @@ In Rust Docs (https://doc.rust-lang.org/book/ch12-00-an-io-project.html) there i
 
 ![alt text](image.png)
 
-#
+# TO DO
+1. exclude search in some diretory (binary/else)
+
+# AVAILABLE COMMAND
 IGNORE_CASE=1 cargo run -- to poem.txt

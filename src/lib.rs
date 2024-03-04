@@ -1,5 +1,11 @@
-use std::{env, error::Error, fs};
+use std::{
+    env,
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
 
+#[derive(Debug)]
 pub struct Config {
     pub query: String,
     pub file_path: String,
@@ -26,20 +32,45 @@ impl Config {
     }
 }
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let content = fs::read_to_string(config.file_path)?;
+pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
+    let content = fs::read_to_string(&config.file_path)?;
+
+    println!("File: {}", &config.file_path);
 
     if config.ignore_case {
         for line in search_insensitive(&config.query, &content) {
-            println!("{}", line);
+            println!("{}", line.trim());
         }
+        println!();
     } else {
         for line in search_sensitive(&config.query, &content) {
-            println!("{}", line);
+            println!("{}", line.trim());
         }
+        println!();
     }
 
     Ok(())
+}
+
+pub fn visit_dir(path: impl AsRef<Path>) -> std::io::Result<Vec<PathBuf>> {
+    let mut buf = vec![];
+    let entries = fs::read_dir(path)?;
+
+    for entry in entries {
+        let entry = entry?;
+        let meta = entry.metadata()?;
+
+        if meta.is_dir() {
+            let mut subdir = visit_dir(entry.path())?;
+            buf.append(&mut subdir);
+        }
+
+        if meta.is_file() {
+            buf.push(entry.path());
+        }
+    }
+
+    Ok(buf)
 }
 
 pub fn search_sensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
@@ -98,5 +129,25 @@ Trust me.";
         let search_result = search_insensitive(query, contents);
 
         assert_eq!(vec!["Rust: ", "Trust me."], search_result)
+    }
+
+    #[test]
+    fn read_from_dir() {
+        let config = Config {
+            file_path: "./src".to_string(),
+            query: "print".to_string(),
+            ignore_case: true,
+        };
+
+        let result = visit_dir(config.file_path);
+        let result = match result {
+            Ok(result) => result,
+            Err(_) => todo!(),
+        };
+
+        let path_buf1 = Path::new("./src/main.rs").to_path_buf();
+        let path_buf2 = Path::new("./src/lib.rs").to_path_buf();
+
+        assert_eq!(vec![path_buf1, path_buf2], result)
     }
 }
