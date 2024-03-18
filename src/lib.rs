@@ -1,5 +1,5 @@
 use std::{
-    env,
+    env::{self, Args},
     error::Error,
     fs,
     path::{Path, PathBuf},
@@ -13,15 +13,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err(
-                "not enough argument. \n\tUse this minigrep with cargo run -- <search> <directory>",
-            );
-        }
+    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        args.next();
 
-        let query = args[1].clone();
-        let file_path = args[2].clone();
+        let query = args.next().expect("Query expected");
+        let file_path = args.next().expect("File path expected");
         let is_ignore_case = env::var("IGNORE_CASE").is_ok();
 
         Ok(Config {
@@ -86,16 +82,7 @@ pub fn search_sensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
 }
 
 pub fn search_insensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
-    let query = query.to_lowercase();
-    let mut result: Vec<&str> = Vec::new();
-
-    for line in content.lines() {
-        if line.to_lowercase().contains(&query) {
-            result.push(line);
-        }
-    }
-
-    result
+    content.lines().filter(|item| item.to_lowercase().contains(query)).collect()
 }
 
 #[cfg(test)]
