@@ -1,5 +1,5 @@
 [package]
-name = "mini-wini-grip"
+name = "minigrip"
 license = "MIT"
 version = "0.1.0"
 description = "A mini grep project"
